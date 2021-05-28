@@ -1,0 +1,5 @@
+*.pwnb
+*.pwncb
+/venv/
+/.idea/
+/__pycache__/
