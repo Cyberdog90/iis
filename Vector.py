@@ -24,45 +24,27 @@ class Vec3f:
 
     # "=="operator
     def __eq__(self, other: "Vec3f") -> bool:
-        if self.x == other.x and self.y == other.y and self.z == other.z:
-            return True
-        else:
-            return False
+        return self.x == other.x and self.y == other.y and self.z == other.z
 
     # "!="operator
     def __ne__(self, other):
-        if self.x != other.x or self.y != other.y or self.z != other.z:
-            return True
-        else:
-            return False
+        return self.x != other.x or self.y != other.y or self.z != other.z
 
     # "<"operator
     def __lt__(self, other):
-        if self.x < other.x and self.y < other.y and self.z < other.z:
-            return True
-        else:
-            return False
+        return self.x < other.x and self.y < other.y and self.z < other.z
 
     # "<="operator
     def __le__(self, other):
-        if self.x <= other.x and self.y <= other.y and self.z <= other.z:
-            return True
-        else:
-            return False
+        return self.x <= other.x and self.y <= other.y and self.z <= other.z
 
     # "<"operator
     def __gt__(self, other):
-        if self.x > other.x and self.y > other.y and self.z > other.z:
-            return True
-        else:
-            return False
+        return self.x > other.x and self.y > other.y and self.z > other.z
 
     # "<="operator
     def __ge__(self, other):
-        if self.x >= other.x and self.y >= other.y and self.z >= other.z:
-            return True
-        else:
-            return False
+        return self.x >= other.x and self.y >= other.y and self.z >= other.z
 
     # "+(single)"operator
     def __pos__(self) -> "Vec3f":

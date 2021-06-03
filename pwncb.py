@@ -1,6 +1,6 @@
 import struct
 
-from data_class import Vec3f
+from Vector import Vec3f
 
 p = []
 n = []
