@@ -1,3 +1,17 @@
+import struct
+import scipy
+
+
+def main():
+    model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
+
+
+def read(file_name):
+    with open(file=file_name, mode="r", encoding="UTF-8") as f:
+        while line := f.readline():
+            yield line
+
+
 class Vec3f:
     x: float
     y: float
@@ -38,14 +52,15 @@ class Vec3f:
     def __le__(self, other):
         return self.x <= other.x and self.y <= other.y and self.z <= other.z
 
-    # "<"operator
+    # ">"operator
     def __gt__(self, other):
         return self.x > other.x and self.y > other.y and self.z > other.z
 
-    # "<="operator
+    # ">="operator
     def __ge__(self, other):
         return self.x >= other.x and self.y >= other.y and self.z >= other.z
 
+    # |-----Arithmetic Methods-----|
     # "+(single)"operator
     def __pos__(self) -> "Vec3f":
         return Vec3f(self.x, self.y, self.z)
@@ -94,6 +109,66 @@ class Vec3f:
     def get(self) -> list:
         return [self.x, self.y, self.z]
 
+
 class Obj:
+    v: list
+    vn: list
+
+    def __init__(self, file_name):
+        self.v = []
+        self.vn = []
+        for line in read(file_name=file_name):
+            if (p := line.split())[0] == "#":
+                continue
+
+            elif p[0] == "v":
+                x, y, z = map(float, p[1:4])
+                self.v.append(Vec3f(x, y, z))
+            elif p[0] == "vn":
+                x, y, z = map(float, p[1:4])
+                self.vn.append(Vec3f(x, y, z))
+
+            else:
+                continue
+
+
+class PWNCB:
+    # PWNCB File Specification
+    # Little Endian
+
+    # |----File Length----|
+    #      (4Bytes:Int)
+    # |-----Vertex X0-----||-----Vertex Y0-----||-----Vertex Z0-----|
+    #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
+    #           ︙                   ︙                   ︙
+    # |-----Vertex Xn-----||-----Vertex Yn-----||-----Vertex Zn-----|
+    #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
+    # |-----Normal X0-----||-----Normal Y0-----||-----Normal Z0-----|
+    #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
+    #           ︙                   ︙                   ︙
+    # |-----Normal Xn-----||-----Normal Yn-----||-----Normal Zn-----|
+    #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
+
+    v: list
+    vn: list
+
+    def __init__(self, file_name):
+        self.v = []
+        self.vn = []
+        with open(file=file_name, mode="rb") as f:
+            data = f.read()
+        length = int(struct.unpack_from("<i", data, 0)[0])
+        for i in range(length):
+            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + i * 24)
+            self.v.append(Vec3f(x, y, z))
+        for i in range(length):
+            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + (length * 24) + i * 24)
+            self.vn.append(Vec3f(x, y, z))
+
+
+class MarchingCubes:
     pass
 
+
+if __name__ == "__main__":
+    main()
