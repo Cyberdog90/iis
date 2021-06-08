@@ -1,5 +1,8 @@
 *.pwnb
+*.pwnc
 *.pwncb
+*.obj
+*.mtl
 /venv/
 /.idea/
 /__pycache__/
