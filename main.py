@@ -6,37 +6,7 @@ import time
 
 
 def main():
-    a = 0.0
-    for i in range(100):
-        a += test()
-        print()
-    print(a / 10)
-
-
-def test():
-    N = 10
-    print(f"試行回数{N}回")
-    start = time.time()
-    for i in range(N):
-        model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
-        model.length += 1
-    print("バイナリ")
-    print(f"経過時間:{time.time() - start}秒")
-    binary = time.time() - start
-
-    # print(len(model.v), len(model.vn), len(model.h), model.length, model.n_length)
-
-    start = time.time()
-    for i in range(N):
-        model2 = Obj("./resources/obj/bunZipper34834.obj")
-        model2.length += 1
-    print("obj")
-    print(f"経過時間:{time.time() - start}秒")
-    obj = time.time() - start
-
-    # print(len(model2.v), len(model2.vn), len(model2.h), model2.length, model2.n_length)
-
-    return obj / binary
+    model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
 
 
 def read(file_name):
