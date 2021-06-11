@@ -1,15 +1,22 @@
 import struct
 import scipy
+import skimage
 
 
 def main():
     model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
+    calc(model)
 
 
 def read(file_name):
     with open(file=file_name, mode="r", encoding="UTF-8") as f:
         while line := f.readline():
             yield line
+
+
+def calc(model):
+    for i in range(model.length):
+        pass
 
 
 class Vec3f:
@@ -32,7 +39,7 @@ class Vec3f:
         self._counter += 1
         if self._counter > 3:
             raise StopIteration
-        return self.get()[self._counter - 1]
+        return self._get()[self._counter - 1]
 
     # |-----Comparison Methods-----|
 
@@ -106,7 +113,7 @@ class Vec3f:
         self.y -= 1
         self.z -= 1
 
-    def get(self) -> list:
+    def _get(self) -> list:
         return [self.x, self.y, self.z]
 
 
@@ -149,25 +156,36 @@ class PWNCB:
     # |-----Normal Xn-----||-----Normal Yn-----||-----Normal Zn-----|
     #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
 
+    length: int
     v: list
     vn: list
+    support_points: list
 
     def __init__(self, file_name):
         self.v = []
         self.vn = []
+        self.support_points = []
+
         with open(file=file_name, mode="rb") as f:
             data = f.read()
-        length = int(struct.unpack_from("<i", data, 0)[0])
-        for i in range(length):
-            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + i * 24)
+
+        # バイナリの長さを読み取り
+        self.length, *_ = struct.unpack_from("<i", data, 0)
+        self.length = int(self.length)
+
+        # 頂点座標の読み取り
+        for i in range(self.length):
+            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + i * 8 * 3)
             self.v.append(Vec3f(x, y, z))
-        for i in range(length):
-            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + (length * 24) + i * 24)
+
+        # 頂点法線の読み取り
+        for i in range(self.length):
+            x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + (self.length * 8 * 3) + i * 8 * 3)
             self.vn.append(Vec3f(x, y, z))
 
-
-class MarchingCubes:
-    pass
+        # 補助接点の生成
+        for i in range(self.length // 2):
+            self.support_points.append(self.v[i])
 
 
 if __name__ == "__main__":
