@@ -1,17 +1,57 @@
 import struct
-import scipy
+from scipy.sparse.linalg import SuperLU
 import skimage
+
+import time
 
 
 def main():
-    model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
-    calc(model)
+    a = 0.0
+    for i in range(100):
+        a += test()
+        print()
+    print(a / 10)
+
+
+def test():
+    N = 10
+    print(f"試行回数{N}回")
+    start = time.time()
+    for i in range(N):
+        model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
+        model.length += 1
+    print("バイナリ")
+    print(f"経過時間:{time.time() - start}秒")
+    binary = time.time() - start
+
+    # print(len(model.v), len(model.vn), len(model.h), model.length, model.n_length)
+
+    start = time.time()
+    for i in range(N):
+        model2 = Obj("./resources/obj/bunZipper34834.obj")
+        model2.length += 1
+    print("obj")
+    print(f"経過時間:{time.time() - start}秒")
+    obj = time.time() - start
+
+    # print(len(model2.v), len(model2.vn), len(model2.h), model2.length, model2.n_length)
+
+    return obj / binary
 
 
 def read(file_name):
     with open(file=file_name, mode="r", encoding="UTF-8") as f:
         while line := f.readline():
             yield line
+
+
+def mk_obj(data: "PWNCB", file_path):
+    with open(file_path, "w", encoding="UTF-8") as f:
+        f.write("# https://github.com/Cyberdog90/iis\n")
+        for vertex, _ in zip(data.v, range(data.length)):
+            f.write(f"v {vertex.x} {vertex.y} {vertex.z}\n")
+        for normal, _ in zip(data.vn, range(data.length)):
+            f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
 
 
 def calc(model):
@@ -118,8 +158,11 @@ class Vec3f:
 
 
 class Obj:
+    length: int  # 物体表面の節点数
+    n_length: int  # 補助節点を含めた全ての節点数
     v: list
     vn: list
+    h: list
 
     def __init__(self, file_name):
         self.v = []
@@ -137,6 +180,15 @@ class Obj:
 
             else:
                 continue
+
+        self.length = len(self.v)
+        self.h = [0] * self.length
+        beta = -10 ** -2
+        for i in range(0, self.length, 2):
+            self.v.append(self.v[i] + self.vn[i] * Vec3f(beta, beta, beta))
+            self.h.append(beta)
+
+        self.n_length = len(self.v)
 
 
 class PWNCB:
@@ -156,15 +208,15 @@ class PWNCB:
     # |-----Normal Xn-----||-----Normal Yn-----||-----Normal Zn-----|
     #    (8Bytes:Double)      (8Bytes:Double)      (8Bytes:Double)
 
-    length: int
+    length: int  # 物体表面の節点数
+    n_length: int  # 補助節点を含めた全ての節点数
     v: list
     vn: list
-    support_points: list
+    h: list
 
     def __init__(self, file_name):
         self.v = []
         self.vn = []
-        self.support_points = []
 
         with open(file=file_name, mode="rb") as f:
             data = f.read()
@@ -184,8 +236,13 @@ class PWNCB:
             self.vn.append(Vec3f(x, y, z))
 
         # 補助接点の生成
-        for i in range(self.length // 2):
-            self.support_points.append(self.v[i])
+        self.h = [0] * self.length
+        beta = -10 ** -2
+        for i in range(0, self.length, 2):
+            self.v.append(self.v[i] + self.vn[i] * Vec3f(beta, beta, beta))
+            self.h.append(beta)
+
+        self.n_length = len(self.v)
 
 
 if __name__ == "__main__":
