@@ -15,7 +15,7 @@ def read(file_name):
             yield line
 
 
-def mk_obj(data: "PWNCB", file_path):
+def mk_obj(data: "PWNCB", file_path: str) -> None:
     with open(file_path, "w", encoding="UTF-8") as f:
         f.write("# https://github.com/Cyberdog90/iis\n")
         for vertex, _ in zip(data.v, range(data.length)):
@@ -92,13 +92,13 @@ class Vec3f:
     def __sub__(self, other: "Vec3f") -> "Vec3f":
         return Vec3f(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def __mul__(self, other):
+    def __mul__(self, other: "Vec3f") -> "Vec3f":
         return Vec3f(self.x * other.x, self.y * other.y, self.z * other.z)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: "Vec3f") -> "Vec3f":
         return Vec3f(self.x / other.x, self.y / other.y, self.z / other.z)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other: "Vec3f") -> "Vec3f":
         return Vec3f(self.x // other.x, self.y // other.y, self.z // other.z)
 
     def __pow__(self, power, modulo=None):
@@ -122,6 +122,9 @@ class Vec3f:
         self.x -= 1
         self.y -= 1
         self.z -= 1
+
+    def distance(self, arg: "Vec3f", reverse=False) -> float:
+        return ((self.x - arg.x) ** 2 + (self.y - arg.y) ** 2 + (self.z - arg.z) ** 2) ** .5
 
     def _get(self) -> list:
         return [self.x, self.y, self.z]
