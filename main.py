@@ -1,23 +1,45 @@
 import struct
-
 import numpy as np
 import mcubes
 
 
 def main():
     model = PWNCB("./resources/pwncb/cube.pwncb")
+    mk_obj(model, "./resources/obj/cube2.obj")
+    print(f"接点数{model.length}")
+    print(f"補助接点を含めた節点数:{len(model.v)}")
+    print(f"法線数:{len(model.vn)}")
+
+    for i in range(model.n_length):
+        if i >= model.length:
+            print(f"補助接点:{i + 1 - model.length} -> x:{model.v[i].x}, y:{model.v[i].y}, z:{model.v[i].z}")
+        else:
+            print(f"接点:{i + 1} -> x:{model.v[i].x}, y:{model.v[i].y}, z:{model.v[i].z}")
+
+    for i in range(len(model.h)):
+        if i >= model.length:
+            print(f"補助接点{i + 1 - model.length}の物体表面からの距離 -> {model.h[i]}")
+        else:
+            print(f"接点{i + 1}の物体表面からの距離 -> {model.h[i]}")
+
     left, right = calc(model=model)
-    func(model, lu_decomposition(left=left, right=right))
-    """
-    print(model.length)
-    print(len(model.v))
-    print(len(model.vn))
-    print(model.h)
-    print(model.n_length)
-    with open("./resources/data/cube_v.csv", "w", encoding="UTF-8") as f:
+
+    with open("./resources/data/left.csv", "w", encoding="UTF-8") as f:
         for i in left:
-            f.write(f"{', '.join(list(map(str, i)))}\n")
-    """
+            f.write(", ".join(list(map(str, i))) + "\n")
+    with open("./resources/data/right.csv", "w", encoding="UTF-8") as f:
+        for i in right:
+            f.write(str(i) + "\n")
+
+    ans = lu_decomposition(left=left, right=right)
+    with open("./resources/data/lu.csv", "w", encoding="UTF-8") as f:
+        for i in ans:
+            f.write(str(i) + "\n")
+
+    lambda_v, alpha_v = ans[:-4], ans[-4:]
+    for i in range(model.length):
+        fun = func(model.v[i], model, lambda_v, alpha_v)
+        print(f"f(x_{i}) -> {fun}")
 
 
 def read(file_name):
@@ -50,7 +72,7 @@ def calc(model: "PWNCB"):
         else:
             for x in range(model.n_length + 4):
                 if x == model.n_length:
-                    tmp.append(1)
+                    tmp.append(1.0)
                 elif x == model.n_length + 1:
                     tmp.append(model.v[y].x)
                 elif x == model.n_length + 2:
@@ -65,14 +87,17 @@ def calc(model: "PWNCB"):
 
 
 def lu_decomposition(left, right):
-    A = np.array(left)
+    a = np.array(left)
     b = np.array(right)
-    Ainv = np.linalg.inv(A)
-    return np.dot(Ainv, b)
+    inv = np.linalg.inv(a)
+    return np.dot(inv, b)
 
 
-def func(model, lambda_alpha):
-    pass
+def func(x: "Vec3f", model, lambda_v, a):
+    c = 0
+    for i in range(model.length):
+        c += lambda_v[i] * abs(x.distance(model.v[i])) ** 3 + a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
+    return c
 
 
 class Vec3f:
@@ -169,7 +194,7 @@ class Vec3f:
         self.y -= 1
         self.z -= 1
 
-    def distance(self, arg: "Vec3f", reverse=False) -> float:
+    def distance(self, arg: "Vec3f") -> float:
         return ((self.x - arg.x) ** 2 + (self.y - arg.y) ** 2 + (self.z - arg.z) ** 2) ** .5
 
     def _get(self) -> list:
@@ -255,7 +280,7 @@ class PWNCB:
             self.vn.append(Vec3f(x, y, z))
 
         # 補助接点の生成
-        self.h = [0] * self.length
+        self.h = [0.0] * self.length
         beta = -10 ** -2
         for i in range(0, self.length, 2):
             self.v.append(self.v[i] + self.vn[i] * Vec3f(beta, beta, beta))
