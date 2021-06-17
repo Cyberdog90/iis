@@ -1,12 +1,27 @@
 import struct
-from scipy.sparse.linalg import SuperLU
-import skimage
 
-import time
+import numpy as np
+
+
+# from scipy.linalg import lu
 
 
 def main():
-    model = PWNCB("./resources/pwncb/bunZipper34834.pwnb")
+    model = PWNCB("./resources/pwncb/cube.pwncb")
+
+    print(model.length)
+    print(len(model.v))
+    print(len(model.vn))
+    print(model.h)
+    print(model.n_length)
+
+    left, right = calc(model=model)
+
+    with open("./resources/data/cube_v.csv", "w", encoding="UTF-8") as f:
+        for i in left:
+            f.write(f"{', '.join(list(map(str, i)))}\n")
+
+    print(lu_decomposition(left=left, right=right))
 
 
 def read(file_name):
@@ -24,9 +39,43 @@ def mk_obj(data: "PWNCB", file_path: str) -> None:
             f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
 
 
-def calc(model):
-    for i in range(model.length):
-        pass
+def calc(model: "PWNCB"):
+    left = []
+    for y in range(model.n_length + 4):
+        tmp = []
+
+        if y == model.n_length:
+            left.append([1.0] * model.n_length + [0.0, 0.0, 0.0, 0.0])
+        elif y == model.n_length + 1:
+            left.append([i.x for i in model.v] + [0.0, 0.0, 0.0, 0.0])
+        elif y == model.n_length + 2:
+            left.append([i.y for i in model.v] + [0.0, 0.0, 0.0, 0.0])
+        elif y == model.n_length + 3:
+            left.append([i.z for i in model.v] + [0.0, 0.0, 0.0, 0.0])
+        else:
+            for x in range(model.n_length + 4):
+
+                if x == model.n_length:
+                    tmp.append(1)
+                elif x == model.n_length + 1:
+                    tmp.append(model.v[y].x)
+                elif x == model.n_length + 2:
+                    tmp.append(model.v[y].y)
+                elif x == model.n_length + 3:
+                    tmp.append(model.v[y].z)
+                else:
+                    tmp.append(model.v[y].distance(model.v[x]))
+
+            left.append(tmp)
+    right = model.h + [0.0, 0.0, 0.0, 0.0]
+    return left, right
+
+
+def lu_decomposition(left, right):
+    A = np.array(left)
+    b = np.array(right)
+    Ainv = np.linalg.inv(A)
+    return np.dot(Ainv, b)
 
 
 class Vec3f:
@@ -155,7 +204,7 @@ class Obj:
                 continue
 
         self.length = len(self.v)
-        self.h = [0] * self.length
+        self.h = [0.0] * self.length
         beta = -10 ** -2
         for i in range(0, self.length, 2):
             self.v.append(self.v[i] + self.vn[i] * Vec3f(beta, beta, beta))
