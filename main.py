@@ -8,20 +8,22 @@ import numpy as np
 
 def main():
     model = PWNCB("./resources/pwncb/cube.pwncb")
+    left, right = calc(model=model)
+    func(model, lu_decomposition(left=left, right=right))
 
+    """
     print(model.length)
     print(len(model.v))
     print(len(model.vn))
     print(model.h)
     print(model.n_length)
 
-    left, right = calc(model=model)
+    
 
     with open("./resources/data/cube_v.csv", "w", encoding="UTF-8") as f:
         for i in left:
             f.write(f"{', '.join(list(map(str, i)))}\n")
-
-    print(lu_decomposition(left=left, right=right))
+    """
 
 
 def read(file_name):
@@ -76,6 +78,10 @@ def lu_decomposition(left, right):
     b = np.array(right)
     Ainv = np.linalg.inv(A)
     return np.dot(Ainv, b)
+
+
+def func(model, lambda_alpha):
+    pass
 
 
 class Vec3f:
