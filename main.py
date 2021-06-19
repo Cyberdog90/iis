@@ -1,14 +1,24 @@
 import struct
+
 import numpy as np
-import mcubes
 
 
 def main():
     model = PWNCB("./resources/pwncb/cube.pwncb")
-    mk_obj(model, "./resources/obj/cube2.obj")
+    #  mk_obj(model, "./resources/obj/cube2.obj")
     print(f"接点数{model.length}")
     print(f"補助接点を含めた節点数:{len(model.v)}")
     print(f"法線数:{len(model.vn)}")
+
+    for i in range(model.length):
+        [print(j, end=" ") for j in model.v[i]]
+        print()
+
+    for i in range(model.length):
+        [print(j, end=" ") for j in model.vn[i]]
+        print()
+
+    exit(0)
 
     for i in range(model.n_length):
         if i >= model.length:
