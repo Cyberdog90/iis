@@ -1,88 +1,67 @@
 import struct
 from typing import Union
+
 import numpy as np
-import mcubes
 
 
 def main():
-    model = Obj("./resources/obj/tri-pyramid.obj")
-    print(f"接点数{model.length}")
-    print(f"補助接点を含めた節点数:{len(model.v)}")
-    print(f"法線数:{len(model.vn)}")
-
-    for i in range(model.n_length):
-        if i >= model.length:
-            print(f"補助接点:{i + 1 - model.length} -> x:{model.v[i].x}, y:{model.v[i].y}, z:{model.v[i].z}")
-        else:
-            print(f"接点:{i + 1} -> x:{model.v[i].x}, y:{model.v[i].y}, z:{model.v[i].z}")
-
-    for i in range(len(model.h)):
-        if i >= model.length:
-            print(f"補助接点{i + 1 - model.length}の物体表面からの距離 -> {model.h[i]}")
-        else:
-            print(f"接点{i + 1}の物体表面からの距離 -> {model.h[i]}")
-
-    left, right = calc(model=model)
-
-    with open("./resources/data/left.csv", "w", encoding="UTF-8") as f:
-        for i in left:
-            f.write(", ".join(list(map(str, i))) + "\n")
-    with open("./resources/data/right.csv", "w", encoding="UTF-8") as f:
-        for i in right:
-            f.write(str(i) + "\n")
-
-    ans = np.linalg.solve(np.array(left), np.array(right)).tolist()
-
-    with open("./resources/data/lu.csv", "w", encoding="UTF-8") as f:
-        for i in ans:
-            f.write(str(i) + "\n")
-
-    lambda_v, alpha_v = ans[:-4], ans[-4:]
-
-    for i in range(model.n_length):
-        fun = func(model.v[i], model, lambda_v, alpha_v)
-        print(f"f(x_{i}) -> {fun}")
-
-    mcubes.marching_cubes_func((-10,-10,-10), (10,10,10),100, 100, 100, func, 16)
+    Itoh()
 
 
-def calc(model: Union["PWNCB", "Obj"]) -> tuple:
-    left = []
-    for y in range(model.n_length + 4):
-        tmp = []
-        if y == model.n_length:
-            left.append([1.0] * model.n_length + [0.0, 0.0, 0.0, 0.0])
-        elif y == model.n_length + 1:
-            left.append([i.x for i in model.v] + [0.0, 0.0, 0.0, 0.0])
-        elif y == model.n_length + 2:
-            left.append([i.y for i in model.v] + [0.0, 0.0, 0.0, 0.0])
-        elif y == model.n_length + 3:
-            left.append([i.z for i in model.v] + [0.0, 0.0, 0.0, 0.0])
-        else:
-            for x in range(model.n_length + 4):
-                if x == model.n_length:
-                    tmp.append(1.0)
-                elif x == model.n_length + 1:
-                    tmp.append(model.v[y].x)
-                elif x == model.n_length + 2:
-                    tmp.append(model.v[y].y)
-                elif x == model.n_length + 3:
-                    tmp.append(model.v[y].z)
-                else:
-                    tmp.append(model.v[y].distance(model.v[x]) ** 3)
-            left.append(tmp)
-    right = model.h + [0.0, 0.0, 0.0, 0.0]
-    return left, right
+class Itoh:
+    model: Union["PWNCB", "Obj"]
+    left: list
+    right: list
+    lambda_vec: list
+    alpha_vec: list
 
+    def __init__(self):
+        # モデルの読み込み
+        self.model = Obj("./resources/obj/tri-pyramid.obj")
+        self.calc()
+        self.lu_decomposition()
+        for i in range(self.model.n_length):
+            print(self.func(x=self.model.v[i]))
 
-def func(x: "Vec3f", model, lambda_v, a):
-    def p():
-        return a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
+    def calc(self):
+        self.left = []
+        for y in range(self.model.n_length + 4):
+            tmp = []
+            if y == self.model.n_length:
+                self.left.append([1.0] * self.model.n_length + [0.0, 0.0, 0.0, 0.0])
+            elif y == self.model.n_length + 1:
+                self.left.append([i.x for i in self.model.v] + [0.0, 0.0, 0.0, 0.0])
+            elif y == self.model.n_length + 2:
+                self.left.append([i.y for i in self.model.v] + [0.0, 0.0, 0.0, 0.0])
+            elif y == self.model.n_length + 3:
+                self.left.append([i.z for i in self.model.v] + [0.0, 0.0, 0.0, 0.0])
+            else:
+                for x in range(self.model.n_length + 4):
+                    if x == self.model.n_length:
+                        tmp.append(1.0)
+                    elif x == self.model.n_length + 1:
+                        tmp.append(self.model.v[y].x)
+                    elif x == self.model.n_length + 2:
+                        tmp.append(self.model.v[y].y)
+                    elif x == self.model.n_length + 3:
+                        tmp.append(self.model.v[y].z)
+                    else:
+                        tmp.append(self.model.v[y].distance(self.model.v[x]) ** 3)
+                self.left.append(tmp)
+        self.right = self.model.h + [0.0, 0.0, 0.0, 0.0]
 
-    c = 0
-    for i in range(model.n_length):
-        c += lambda_v[i] * x.distance(model.v[i]) ** 3
-    return c + p()
+    def lu_decomposition(self):
+        ans = np.linalg.solve(np.array(self.left), np.array(self.right)).tolist()
+        self.lambda_vec, self.alpha_vec = ans[:-4], ans[-4:]
+
+    def func(self, x: "Vec3f"):
+        def p():
+            return self.alpha_vec[0] + self.alpha_vec[1] * x.x + self.alpha_vec[2] * x.y + self.alpha_vec[3] * x.z
+
+        c = 0
+        for i in range(self.model.n_length):
+            c += self.lambda_vec[i] * x.distance(self.model.v[i]) ** 3
+        return c + p()
 
 
 def mk_obj(data: "PWNCB", file_path: str) -> None:
