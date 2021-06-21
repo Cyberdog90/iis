@@ -43,21 +43,6 @@ def main():
         print(f"f(x_{i}) -> {fun}")
 
 
-def read(file_name):
-    with open(file=file_name, mode="r", encoding="UTF-8") as f:
-        while line := f.readline():
-            yield line
-
-
-def mk_obj(data: "PWNCB", file_path: str) -> None:
-    with open(file_path, "w", encoding="UTF-8") as f:
-        f.write("# https://github.com/Cyberdog90/iis\n")
-        for vertex, _ in zip(data.v, range(data.length)):
-            f.write(f"v {vertex.x} {vertex.y} {vertex.z}\n")
-        for normal, _ in zip(data.vn, range(data.length)):
-            f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
-
-
 def calc(model: Union["PWNCB", "Obj"]) -> tuple:
     left = []
     for y in range(model.n_length + 4):
@@ -95,6 +80,21 @@ def func(x: "Vec3f", model, lambda_v, a):
     for i in range(model.n_length):
         c += lambda_v[i] * x.distance(model.v[i]) ** 3
     return c + p()
+
+
+def mk_obj(data: "PWNCB", file_path: str) -> None:
+    with open(file_path, "w", encoding="UTF-8") as f:
+        f.write("# https://github.com/Cyberdog90/iis\n")
+        for vertex, _ in zip(data.v, range(data.length)):
+            f.write(f"v {vertex.x} {vertex.y} {vertex.z}\n")
+        for normal, _ in zip(data.vn, range(data.length)):
+            f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
+
+
+def read(file_name):
+    with open(file=file_name, mode="r", encoding="UTF-8") as f:
+        while line := f.readline():
+            yield line
 
 
 class Vec3f:
