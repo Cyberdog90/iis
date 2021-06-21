@@ -1,24 +1,13 @@
 import struct
-
+from typing import Union
 import numpy as np
 
 
 def main():
-    model = PWNCB("./resources/pwncb/cube.pwncb")
-    #  mk_obj(model, "./resources/obj/cube2.obj")
+    model = Obj("./resources/obj/tri-pyramid.obj")
     print(f"接点数{model.length}")
     print(f"補助接点を含めた節点数:{len(model.v)}")
     print(f"法線数:{len(model.vn)}")
-
-    for i in range(model.length):
-        [print(j, end=" ") for j in model.v[i]]
-        print()
-
-    for i in range(model.length):
-        [print(j, end=" ") for j in model.vn[i]]
-        print()
-
-    exit(0)
 
     for i in range(model.n_length):
         if i >= model.length:
@@ -41,13 +30,15 @@ def main():
         for i in right:
             f.write(str(i) + "\n")
 
-    ans = lu_decomposition(left=left, right=right)
+    ans = np.linalg.solve(np.array(left), np.array(right)).tolist()
+
     with open("./resources/data/lu.csv", "w", encoding="UTF-8") as f:
         for i in ans:
             f.write(str(i) + "\n")
 
     lambda_v, alpha_v = ans[:-4], ans[-4:]
-    for i in range(model.length):
+
+    for i in range(model.n_length):
         fun = func(model.v[i], model, lambda_v, alpha_v)
         print(f"f(x_{i}) -> {fun}")
 
@@ -67,7 +58,7 @@ def mk_obj(data: "PWNCB", file_path: str) -> None:
             f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
 
 
-def calc(model: "PWNCB"):
+def calc(model: Union["PWNCB", "Obj"]) -> tuple:
     left = []
     for y in range(model.n_length + 4):
         tmp = []
@@ -90,24 +81,17 @@ def calc(model: "PWNCB"):
                 elif x == model.n_length + 3:
                     tmp.append(model.v[y].z)
                 else:
-                    tmp.append(model.v[y].distance(model.v[x]))
+                    tmp.append(model.v[y].distance(model.v[x]) ** 3)
             left.append(tmp)
     right = model.h + [0.0, 0.0, 0.0, 0.0]
     return left, right
 
 
-def lu_decomposition(left, right):
-    a = np.array(left)
-    b = np.array(right)
-    inv = np.linalg.inv(a)
-    return np.dot(inv, b)
-
-
 def func(x: "Vec3f", model, lambda_v, a):
     c = 0
-    for i in range(model.length):
-        c += lambda_v[i] * abs(x.distance(model.v[i])) ** 3 + a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
-    return c
+    for i in range(model.n_length):
+        c += lambda_v[i] * x.distance(model.v[i]) ** 3
+    return c + a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
 
 
 class Vec3f:
