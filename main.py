@@ -88,10 +88,13 @@ def calc(model: Union["PWNCB", "Obj"]) -> tuple:
 
 
 def func(x: "Vec3f", model, lambda_v, a):
+    def p():
+        return a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
+
     c = 0
     for i in range(model.n_length):
         c += lambda_v[i] * x.distance(model.v[i]) ** 3
-    return c + a[0] + a[1] * x.x + a[2] * x.y + a[3] * x.z
+    return c + p()
 
 
 class Vec3f:
