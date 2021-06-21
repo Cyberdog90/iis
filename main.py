@@ -20,13 +20,15 @@ class Itoh:
 
     def __init__(self):
         # モデルの読み込み
-        self.model = Obj("./resources/obj/bunny1500_0.obj")
+        self.model = PWNCB("./resources/pwncb/moai.pwnb")
+        print(self.model.n_length)
+
         self.calc()
         self.lu_decomposition()
         for i in range(self.model.n_length):
             self.func(x=self.model.v[i])
-        vertices, triangles = mcubes.marching_cubes_func((-2, -2, -2), (2, 2, 2), 100, 100, 100, self.f_func, 0)
-        mcubes.export_obj(vertices, triangles, "./resources/data/itoh3.obj")
+        vertices, triangles = mcubes.marching_cubes_func((-2, -2, -2), (2, 2, 2), 50, 50, 50, self.f_func, 0)
+        mcubes.export_obj(vertices, triangles, "./resources/data/taku.obj")
 
     def calc(self):
         self.left = []
