@@ -6,6 +6,8 @@ import numpy as np
 
 
 def main():
+    # mk_obj(PWNCB("./resources/pwncb/bunny1500.pwncb"), "./resources/obj/bunny1500.obj")
+    # exit(0)
     Itoh()
 
 
@@ -18,14 +20,13 @@ class Itoh:
 
     def __init__(self):
         # モデルの読み込み
-        self.model = Obj("./resources/obj/taku.obj")
+        self.model = Obj("./resources/obj/bunny1500_0.obj")
         self.calc()
         self.lu_decomposition()
         for i in range(self.model.n_length):
-            print(self.func(x=self.model.v[i]))
-
-    vertices, triangles = mcubes.marching_cubes_func((0, 0, 0), (0, 0, 0), 10, 10, 10, self.f_func, 0)
-    mcubes.export_obj(vertices, triangles, "./resources/data/itoh.obj")
+            self.func(x=self.model.v[i])
+        vertices, triangles = mcubes.marching_cubes_func((-2, -2, -2), (2, 2, 2), 100, 100, 100, self.f_func, 0)
+        mcubes.export_obj(vertices, triangles, "./resources/data/itoh3.obj")
 
     def calc(self):
         self.left = []
@@ -52,7 +53,6 @@ class Itoh:
                     else:
                         tmp.append(self.model.v[y].distance(self.model.v[x]) ** 3)
                 self.left.append(tmp)
-            print(y)
         self.right = self.model.h + [0.0, 0.0, 0.0, 0.0]
 
     def lu_decomposition(self):
