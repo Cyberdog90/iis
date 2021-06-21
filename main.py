@@ -1,6 +1,7 @@
 import struct
 from typing import Union
 
+import mcubes
 import numpy as np
 
 
@@ -17,11 +18,14 @@ class Itoh:
 
     def __init__(self):
         # モデルの読み込み
-        self.model = Obj("./resources/obj/tri-pyramid.obj")
+        self.model = Obj("./resources/obj/taku.obj")
         self.calc()
         self.lu_decomposition()
         for i in range(self.model.n_length):
             print(self.func(x=self.model.v[i]))
+
+    vertices, triangles = mcubes.marching_cubes_func((0, 0, 0), (0, 0, 0), 10, 10, 10, self.f_func, 0)
+    mcubes.export_obj(vertices, triangles, "./resources/data/itoh.obj")
 
     def calc(self):
         self.left = []
@@ -48,13 +52,17 @@ class Itoh:
                     else:
                         tmp.append(self.model.v[y].distance(self.model.v[x]) ** 3)
                 self.left.append(tmp)
+            print(y)
         self.right = self.model.h + [0.0, 0.0, 0.0, 0.0]
 
     def lu_decomposition(self):
         ans = np.linalg.solve(np.array(self.left), np.array(self.right)).tolist()
         self.lambda_vec, self.alpha_vec = ans[:-4], ans[-4:]
 
-    def func(self, x: "Vec3f"):
+    def f_func(self, x, y, z) -> float:
+        return self.func(Vec3f(x, y, z))
+
+    def func(self, x: "Vec3f") -> float:
         def p():
             return self.alpha_vec[0] + self.alpha_vec[1] * x.x + self.alpha_vec[2] * x.y + self.alpha_vec[3] * x.z
 
