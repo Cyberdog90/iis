@@ -1,6 +1,7 @@
 import struct
 from typing import Union
 import numpy as np
+import mcubes
 
 
 def main():
@@ -41,6 +42,8 @@ def main():
     for i in range(model.n_length):
         fun = func(model.v[i], model, lambda_v, alpha_v)
         print(f"f(x_{i}) -> {fun}")
+
+    mcubes.marching_cubes_func((-10,-10,-10), (10,10,10),100, 100, 100, func, 16)
 
 
 def calc(model: Union["PWNCB", "Obj"]) -> tuple:
