@@ -6,8 +6,7 @@ import numpy as np
 
 
 def main():
-    mk_obj(PWNCB("./resources/pwncb/taku.pwncb"), "./resources/obj/taku_low.obj", 100)
-    Itoh()
+    Itoh("./resources/pwncb/taku.pwncb")
 
 
 class Itoh:
@@ -17,17 +16,19 @@ class Itoh:
     lambda_vec: list
     alpha_vec: list
 
-    def __init__(self):
+    def __init__(self, filename: str):
         # モデルの読み込み
-        # self.model = PWNCB("./resources/pwncb/moai.pwnb")
-        self.model = Obj("./resources/obj/taku_low.obj")
+        if "pwnb" or "pwncb" == filename.split(".")[-1]:
+            self.model = PWNCB(filename, precision=100)
+        else:
+            self.model = Obj(filename)
         print(self.model.n_length)
 
         self.calc()
         self.lu_decomposition()
         for i in range(self.model.n_length):
             self.func(x=self.model.v[i])
-        vertices, triangles = mcubes.marching_cubes_func((0, 0, 0), (1, 1, 1), 20, 20, 20, self.f_func, 0)
+        vertices, triangles = mcubes.marching_cubes_func((0, 0, 0), (1, 1, 1), 50, 50, 50, self.f_func, 0)
         mcubes.export_obj(vertices, triangles, "./resources/data/taku.obj")
 
     def calc(self):
@@ -104,7 +105,7 @@ class Vec3f:
         self.y = float(y)
         self.z = float(z)
 
-    # |-----Iterator Methods-----|
+    # Special Methods
     def __iter__(self):
         self._counter = 0
         return self
@@ -115,38 +116,27 @@ class Vec3f:
             raise StopIteration
         return self._get()[self._counter - 1]
 
-    # |-----Comparison Methods-----|
-
-    # "=="operator
     def __eq__(self, other: "Vec3f") -> bool:
         return self.x == other.x and self.y == other.y and self.z == other.z
 
-    # "!="operator
     def __ne__(self, other):
         return self.x != other.x or self.y != other.y or self.z != other.z
 
-    # "<"operator
     def __lt__(self, other):
         return self.x < other.x and self.y < other.y and self.z < other.z
 
-    # "<="operator
     def __le__(self, other):
         return self.x <= other.x and self.y <= other.y and self.z <= other.z
 
-    # ">"operator
     def __gt__(self, other):
         return self.x > other.x and self.y > other.y and self.z > other.z
 
-    # ">="operator
     def __ge__(self, other):
         return self.x >= other.x and self.y >= other.y and self.z >= other.z
 
-    # |-----Arithmetic Methods-----|
-    # "+(single)"operator
     def __pos__(self) -> "Vec3f":
         return Vec3f(self.x, self.y, self.z)
 
-    # "-(single)"operator
     def __neg__(self) -> "Vec3f":
         return Vec3f(-self.x, -self.y, -self.z)
 
@@ -177,6 +167,7 @@ class Vec3f:
     def __len__(self):
         return 3
 
+    # Util Methods
     def increment(self) -> None:
         self.x += 1
         self.y += 1
@@ -278,7 +269,7 @@ class PWNCB:
     vn: list
     h: list
 
-    def __init__(self, file_name):
+    def __init__(self, file_name, precision: int = 1):
         self.v = []
         self.vn = []
 
@@ -296,21 +287,26 @@ class PWNCB:
 
         # 頂点座標の読み取り
         for i in range(self.length):
+            if i % precision != 0:
+                continue
             x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + i * 8 * 3)
             v_min = min(x, y, z, v_min)
             v_max = max(x, y, z, v_max)
             self.v.append(Vec3f(x, y, z))
 
-        for i in range(self.length):
-            x, y, z = [((j - v_min) / (v_max - v_min)) for j in self.v[i]]
-            self.v[i] = Vec3f(x, y, z)
-
         # 頂点法線の読み取り
         for i in range(self.length):
+            if i % precision != 0:
+                continue
             x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + (self.length * 8 * 3) + i * 8 * 3)
             vn_min = min(x, y, z, vn_min)
             vn_max = max(x, y, z, vn_max)
             self.vn.append(Vec3f(x, y, z))
+        self.length = len(self.v)
+
+        for i in range(self.length):
+            x, y, z = [((j - v_min) / (v_max - v_min)) for j in self.v[i]]
+            self.v[i] = Vec3f(x, y, z)
 
         for i in range(self.length):
             x, y, z = [((j - vn_min) / (vn_max - vn_min)) for j in self.vn[i]]
