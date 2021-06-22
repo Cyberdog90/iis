@@ -6,7 +6,7 @@ import numpy as np
 
 
 def main():
-    # mk_obj(PWNCB("./resources/pwncb/bunny1500.pwncb"), "./resources/obj/bunny1500.obj")
+    # mk_obj(PWNCB("./resources/pwncb/taku.pwncb"), "./resources/obj/taku_low.obj", 50)
     # exit(0)
     Itoh()
 
@@ -20,7 +20,8 @@ class Itoh:
 
     def __init__(self):
         # モデルの読み込み
-        self.model = PWNCB("./resources/pwncb/moai.pwnb")
+        # self.model = PWNCB("./resources/pwncb/moai.pwnb")
+        self.model = Obj("./resources/obj/taku_low.obj")
         print(self.model.n_length)
 
         self.calc()
@@ -74,12 +75,16 @@ class Itoh:
         return c + p()
 
 
-def mk_obj(data: "PWNCB", file_path: str) -> None:
+def mk_obj(data: "PWNCB", file_path: str, step: int = 1) -> None:
     with open(file_path, "w", encoding="UTF-8") as f:
         f.write("# https://github.com/Cyberdog90/iis\n")
-        for vertex, _ in zip(data.v, range(data.length)):
+        for vertex, i in zip(data.v, range(data.length)):
+            if i % step != 0:
+                continue
             f.write(f"v {vertex.x} {vertex.y} {vertex.z}\n")
-        for normal, _ in zip(data.vn, range(data.length)):
+        for normal, i in zip(data.vn, range(data.length)):
+            if i % step != 0:
+                continue
             f.write(f"vn {normal.x} {normal.y} {normal.z}\n")
 
 
