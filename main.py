@@ -6,8 +6,7 @@ import numpy as np
 
 
 def main():
-    # mk_obj(PWNCB("./resources/pwncb/taku.pwncb"), "./resources/obj/taku_low.obj", 50)
-    # exit(0)
+    mk_obj(PWNCB("./resources/pwncb/taku.pwncb"), "./resources/obj/taku_low.obj", 100)
     Itoh()
 
 
@@ -28,7 +27,7 @@ class Itoh:
         self.lu_decomposition()
         for i in range(self.model.n_length):
             self.func(x=self.model.v[i])
-        vertices, triangles = mcubes.marching_cubes_func((-2, -2, -2), (2, 2, 2), 50, 50, 50, self.f_func, 0)
+        vertices, triangles = mcubes.marching_cubes_func((0, 0, 0), (1, 1, 1), 20, 20, 20, self.f_func, 0)
         mcubes.export_obj(vertices, triangles, "./resources/data/taku.obj")
 
     def calc(self):
@@ -194,6 +193,15 @@ class Vec3f:
     def _get(self) -> list:
         return [self.x, self.y, self.z]
 
+    def min(self):
+        return min(self._get())
+
+    def max(self):
+        return max(self._get())
+
+    def mix(self):
+        return min(self._get()), max(self._get())
+
 
 class Obj:
     length: int  # 物体表面の節点数
@@ -205,21 +213,39 @@ class Obj:
     def __init__(self, file_name):
         self.v = []
         self.vn = []
+        v_min = 2 ** 32
+        v_max = -2 ** 32
+        vn_min = 2 ** 32
+        vn_max = -2 ** 32
+
         for line in read(file_name=file_name):
             if (p := line.split())[0] == "#":
                 continue
 
             elif p[0] == "v":
                 x, y, z = map(float, p[1:4])
+                v_min = min(x, y, z, v_min)
+                v_max = max(x, y, z, v_max)
                 self.v.append(Vec3f(x, y, z))
             elif p[0] == "vn":
                 x, y, z = map(float, p[1:4])
+                vn_min = min(x, y, z, vn_min)
+                vn_max = max(x, y, z, vn_max)
                 self.vn.append(Vec3f(x, y, z))
 
             else:
                 continue
 
         self.length = len(self.v)
+
+        for i in range(self.length):
+            x, y, z = [((j - v_min) / (v_max - v_min)) for j in self.v[i]]
+            self.v[i] = Vec3f(x, y, z)
+
+        for i in range(self.length):
+            x, y, z = [((j - vn_min) / (vn_max - vn_min)) for j in self.vn[i]]
+            self.vn[i] = Vec3f(x, y, z)
+
         self.h = [0.0] * self.length
         beta = -10 ** -2
         for i in range(0, self.length, 2):
@@ -256,6 +282,11 @@ class PWNCB:
         self.v = []
         self.vn = []
 
+        v_min = 2 ** 32
+        v_max = -2 ** 32
+        vn_min = 2 ** 32
+        vn_max = -2 ** 32
+
         with open(file=file_name, mode="rb") as f:
             data = f.read()
 
@@ -266,12 +297,24 @@ class PWNCB:
         # 頂点座標の読み取り
         for i in range(self.length):
             x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + i * 8 * 3)
+            v_min = min(x, y, z, v_min)
+            v_max = max(x, y, z, v_max)
             self.v.append(Vec3f(x, y, z))
+
+        for i in range(self.length):
+            x, y, z = [((j - v_min) / (v_max - v_min)) for j in self.v[i]]
+            self.v[i] = Vec3f(x, y, z)
 
         # 頂点法線の読み取り
         for i in range(self.length):
             x, y, z, *_ = struct.unpack_from("<ddd", data, 4 + (self.length * 8 * 3) + i * 8 * 3)
+            vn_min = min(x, y, z, vn_min)
+            vn_max = max(x, y, z, vn_max)
             self.vn.append(Vec3f(x, y, z))
+
+        for i in range(self.length):
+            x, y, z = [((j - vn_min) / (vn_max - vn_min)) for j in self.vn[i]]
+            self.vn[i] = Vec3f(x, y, z)
 
         # 補助接点の生成
         self.h = [0.0] * self.length
