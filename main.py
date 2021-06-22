@@ -9,7 +9,7 @@ from vector import Vec3f
 
 
 def main():
-    model = File3D("./resources/obj/cube2.obj")
+    Itoh("./resources/pwncb/moai.pwnb")
 
 
 class File3D:
@@ -148,15 +148,15 @@ class Itoh:
 
     def __init__(self, filename: str):
         # モデルの読み込み
-        self.model = File3D(file_name=filename, precision=1)
+        self.model = File3D(file_name=filename, precision=100)
         print(self.model.n_length)
 
         self.calc()
         self.lu_decomposition()
         for i in range(self.model.n_length):
             self.func(x=self.model.v[i])
-        vertices, triangles = mcubes.marching_cubes_func((-1, -1, -1), (1, 1, 1), 50, 50, 50, self.f_func, 0)
-        mcubes.export_obj(vertices, triangles, "./resources/data/bunny.obj")
+        vertices, triangles = mcubes.marching_cubes_func((-1, -1, -1), (1, 1, 1), 10, 10, 10, self.f_func, 0)
+        mcubes.export_obj(vertices, triangles, "./resources/data/moai.obj")
 
     def calc(self):
         self.left = []
@@ -200,6 +200,14 @@ class Itoh:
         for i in range(self.model.n_length):
             c += self.lambda_vec[i] * x.distance(self.model.v[i]) ** 3
         return c + p()
+
+
+class ImplicitSurface:
+    model: File3D
+    _left: list
+    _right: list
+    lambda_vec: list
+    alpha_vec: list
 
 
 class MarchingCubes:
